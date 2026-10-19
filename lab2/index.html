@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>SSI - AJAX</title>
+    <script>
+      async function makeRequest(url, method, headers, body) {
+        try {
+          const options = { method, headers, body };
+          const response = await fetch(url, options);
+          if (!response.ok) {
+            throw new Error(response.status);
+          }
+          return await response.json();
+        } catch (err) {
+          console.error(err);
+          return err;
+        }
+      }
+
+      function getSuggestions() {
+        let el = document.getElementById("results");
+        let value = document.getElementById("search").value;
+
+        if (!value) {
+          el.innerHTML = "";
+          return;
+        }
+
+        makeRequest(
+          "http://localhost:3000/",
+          "POST",
+          { "Content-Type": "application/json" },
+          JSON.stringify({ value }),
+        ).then((data) => {
+          const cars = data.cars || [];
+          el.innerHTML = cars
+            .map(
+              (car) =>
+                `<div class="list" onclick="selectCar('${car}')">${car}</div>`,
+            )
+            .join("\n");
+        });
+      }
+
+      function selectCar(car) {
+        document.getElementById("search").value = car;
+        document.getElementById("results").innerHTML = "";
+      }
+
+      function addCar() {
+        let value = document.getElementById("search").value;
+        makeRequest(
+          "http://localhost:3000/",
+          "PUT",
+          { "Content-Type": "application/json" },
+          JSON.stringify({ name: value }),
+        ).then((data) => {
+          alert(data.message);
+        });
+      }
+
+      function deleteCar() {
+        let value = document.getElementById("search").value;
+        makeRequest(
+          "http://localhost:3000/",
+          "DELETE",
+          { "Content-Type": "application/json" },
+          JSON.stringify({ name: value }),
+        ).then((data) => {
+          alert(data.message);
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <h4>Wpisz markę samochodu:</h4>
+    <input id="search" type="text" onkeyup="javascript: getSuggestions();" />
+    <button onclick="addCar()">Dodaj markę</button>
+    <button onclick="deleteCar()">Usuń markę</button>
+    <div id="results"></div>
+  </body>
+</html>
